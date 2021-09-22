@@ -28,6 +28,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -86,6 +87,15 @@ public class UserService {
         setConnect(userInfo);
         setCache(info);
         return Response.success(info);
+    }
+
+    public Response<List<UserInfo>> searchUser(String key) {
+        if (!StringUtils.hasText(key)){
+            return Response.error(ResponseCode.ERROR,"关键字不能为空");
+        }
+        final List<UserInfo> userInfoList =
+                userRepository.findUserInfoByUserNameContaining(key);
+        return Response.success(userInfoList);
     }
 
     private void setConnect(UserInfo userInfo) {
@@ -180,6 +190,7 @@ public class UserService {
         ossClient.shutdown();
         return fileUrl;
     }
+
 
 
 }

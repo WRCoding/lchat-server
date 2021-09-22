@@ -7,6 +7,8 @@ package top.lpepsi.lchatserver.dao;/**
 import org.springframework.data.jpa.repository.JpaRepository;
 import top.lpepsi.lchatserver.entity.UserInfo;
 
+import java.util.List;
+
 /**
  *@author 林北
  *@description
@@ -19,4 +21,11 @@ public interface UserRepository extends JpaRepository<UserInfo,String> {
      * @return top.lpepsi.chatterer.entity.UserInfo
      **/
     UserInfo findUserInfoByUserName(String username);
+
+    /**
+     * 根据用户名查找
+     * @author 林北
+     * @date 2021-09-22 20:33
+     **/
+    List<UserInfo> findUserInfoByUserNameContaining(String key);
 }

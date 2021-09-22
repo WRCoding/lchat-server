@@ -10,6 +10,7 @@ import top.lpepsi.lchatserver.service.user.UserService;
 
 import javax.annotation.Resource;
 import java.io.File;
+import java.util.List;
 
 /**
  * @author 林北
@@ -45,5 +46,10 @@ public class UserController {
     @PostMapping("/addfriend")
     public Response<String> addFriend(@RequestBody Friend friend){
         return userService.addFriend(friend);
+    }
+
+    @GetMapping("/search")
+    public Response<List<UserInfo>> searchUser(String key){
+        return userService.searchUser(key);
     }
 }
