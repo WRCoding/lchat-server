@@ -8,6 +8,7 @@ import com.aliyun.oss.model.CannedAccessControlList;
 import com.aliyun.oss.model.PutObjectRequest;
 import com.aliyun.oss.model.PutObjectResult;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -40,10 +41,16 @@ import java.util.UUID;
 @Slf4j
 public class UserService {
 
-    public static final String END_POINT = "oss-cn-shenzhen.aliyuncs.com";
-    public static final String ACCESS_KEY_ID = "LTAI5tNZL22f5adNW1D5Fnq8";
-    public static final String ACCESS_KEY_SECRET = "BV1RqiggdmXcROb06G1hRMKHu8yGeM";
-    public static final String BUCKET = "lchat-server";
+    @Value("${endpoint}")
+    private String endPoint;
+    @Value("${accessKeyId}")
+    private String accessKeyId;
+    @Value("${accessKeySecret}")
+    private String accessKeySecret;
+    @Value("${bucket}")
+    private String bucket;
+
+
 
     @Resource
     private UserRepository userRepository;
@@ -84,7 +91,6 @@ public class UserService {
         }
         log.info(info.toString());
         calDays(info);
-        setConnect(userInfo);
         setCache(info);
         return Response.success(info);
     }
@@ -98,9 +104,7 @@ public class UserService {
         return Response.success(userInfoList);
     }
 
-    private void setConnect(UserInfo userInfo) {
 
-    }
 
     public Response<String> addFriend(Friend friend) {
         friendRepository.save(friend);
@@ -160,8 +164,8 @@ public class UserService {
     }
 
     private String uploadLocalFileToOSS(File localFile,boolean flag) {
-        OSS ossClient = new OSSClientBuilder().build(END_POINT,ACCESS_KEY_ID,
-                ACCESS_KEY_SECRET);
+        OSS ossClient = new OSSClientBuilder().build(endPoint,accessKeyId,
+                accessKeySecret);
         boolean isImage = true;
         try {
             BufferedImage image = ImageIO.read(localFile);
@@ -175,15 +179,15 @@ public class UserService {
         String fileAddress = filePre +"/"+dateStr+"/"
                 + UUID.randomUUID().toString().replace("-","")
                 +"-"+localFile.getName();
-        PutObjectRequest putObjectRequest = new PutObjectRequest(BUCKET,fileAddress,localFile);
+        PutObjectRequest putObjectRequest = new PutObjectRequest(bucket,fileAddress,localFile);
         String fileUrl;
         if (isImage){
-            fileUrl = "https://"+BUCKET+"."+END_POINT+"/"+fileAddress;
+            fileUrl = "https://"+bucket+"."+endPoint+"/"+fileAddress;
         }else{
             fileUrl = "非图片 不可预览 文件路径为: "+fileAddress;
         }
         PutObjectResult result = ossClient.putObject(putObjectRequest);
-        ossClient.setBucketAcl(BUCKET, CannedAccessControlList.PublicRead);
+        ossClient.setBucketAcl(bucket, CannedAccessControlList.PublicRead);
         if (result != null){
             log.info("OSS文件上传成功，URL: {}",fileUrl);
         }

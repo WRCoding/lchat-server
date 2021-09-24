@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: 账号
+    password: 密码
+    url: jdbc:mysql://localhost:3306/lchat-server?serverTimezone=Asia/Shanghai&characterEncoding=UTF-8
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database: mysql
+    show-sql: true
+
+server:
+  port: 8077
+
+endpoint:
+accessKeyId:
+accessKeySecret:
+bucket:
