@@ -3,15 +3,17 @@ package top.lpepsi.lchatserver.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 import top.lpepsi.lchatserver.entity.Message;
 import top.lpepsi.lchatserver.entity.MsgType;
+import top.lpepsi.lchatserver.entity.Response;
 
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Scanner;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -31,6 +33,10 @@ public class ChatServer {
     protected ConcurrentHashMap<Socket,OutputStream> socketList = new ConcurrentHashMap<>();
 
     Thread thread = new Thread(() -> connectClient(),"L-chat-server");
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
+
 
     @PostConstruct
     public void init() {
@@ -56,6 +62,9 @@ public class ChatServer {
         clientThread.start();
     }
 
+    public Response getClient() {
+        return Response.success(userSocketMap.keys());
+    }
 
 
     class ClientThread extends Thread{
@@ -102,6 +111,9 @@ public class ChatServer {
                 case TEXT:
                     parseText(data);
                     break;
+                case QUIT:
+                    handleQuit(data);
+                    break;
                 default:
                     throw new UnsupportedOperationException("unsupported msgType : "+data.getMsgType());
             }
@@ -118,6 +130,24 @@ public class ChatServer {
                 printClientInfo();
                 clientList.add(client);
                 socketList.put(client,client.getOutputStream());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void handleQuit(Message data) {
+            //获取断开连接的用户ID
+            final String from = data.getFrom();
+            final Socket disconnectSocket = userSocketMap.get(from);
+            userSocketMap.remove(from);
+            clientList.remove(disconnectSocket);
+            socketList.remove(disconnectSocket);
+            stringRedisTemplate.delete(from);
+            this.interrupt();
+            try {
+                if (client != null){
+                    client.close();
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             }

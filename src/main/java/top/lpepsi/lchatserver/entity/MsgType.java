@@ -15,7 +15,9 @@ public enum MsgType {
 
     FILE("FILE","文件"),
 
-    ERROR_TYPE("ERROR_TYPE","错误类型");
+    ERROR_TYPE("ERROR_TYPE","错误类型"),
+
+    QUIT("QUIT","断开连接");
 
     private String type;
     private String desc;
