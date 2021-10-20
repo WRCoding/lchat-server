@@ -19,7 +19,9 @@ public class Friend extends BaseEntity{
     @Column(name = "userId")
     private String userId;
 
-    @Column(name = "addUserId")
-    private String addUserId;
+    @Column(name = "friendId")
+    private String friendId;
 
+    @Column(name = "isAgree")
+    private Integer isAgree = 1;
 }
