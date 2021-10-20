@@ -11,8 +11,7 @@ import javax.persistence.EntityListeners;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.MappedSuperclass;
-import java.time.LocalDateTime;
-import java.util.Date;
+
 
 /**
  * @author 林北
@@ -30,8 +29,8 @@ public class BaseEntity {
     private String id;
 
     @CreatedDate
-    private Date created;
+    private Long created;
 
     @LastModifiedDate
-    private Date updated;
+    private Long updated;
 }

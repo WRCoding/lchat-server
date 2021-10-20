@@ -31,6 +31,7 @@ public class ChatServer {
     protected ConcurrentHashMap<String,Socket> userSocketMap = new ConcurrentHashMap<>();
 
     protected ConcurrentHashMap<Socket,OutputStream> socketList = new ConcurrentHashMap<>();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     Thread thread = new Thread(() -> connectClient(),"L-chat-server");
 
@@ -94,7 +95,6 @@ public class ChatServer {
         }
 
         private void handleMessage(String message) {
-            ObjectMapper mapper = new ObjectMapper();
             try {
                 Message data = mapper.readValue(message, Message.class);
                 parseMessage(data);
@@ -111,6 +111,9 @@ public class ChatServer {
                 case TEXT:
                     parseText(data);
                     break;
+                case IMAGE:
+                    parseImage(data);
+                    break;
                 case QUIT:
                     handleQuit(data);
                     break;
@@ -119,9 +122,25 @@ public class ChatServer {
             }
         }
 
+        private void parseImage(Message data) {
+            String prefix = "lchatimage/";
+            String suffix = ".png";
+            String imageFlag = data.getMessage();
+            log.info("image path : {}",prefix + imageFlag + suffix);
+            data.setMessage(prefix + imageFlag + suffix);
+            try {
+                sendToOtherClient(mapper.writeValueAsString(data),userSocketMap.get(data.getTo()));
+            } catch (JsonProcessingException e) {
+                log.error("parseImage JSON 解析失败 : {}",e);
+            }
+        }
+
         private void parseText(Message data) {
-            String to = data.getTo();
-            sendToOtherClient(data.getMessage(),userSocketMap.get(to));
+            try {
+                sendToOtherClient(mapper.writeValueAsString(data),userSocketMap.get(data.getTo()));
+            } catch (JsonProcessingException e) {
+                log.error("parseText JSON 解析失败 : {}",e);
+            }
         }
 
         private void initConnect(Message data) {

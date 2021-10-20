@@ -9,6 +9,7 @@ import com.aliyun.oss.model.PutObjectRequest;
 import com.aliyun.oss.model.PutObjectResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Example;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -104,7 +105,9 @@ public class UserService {
         return Response.success(userInfoList);
     }
 
-
+    public List<UserInfo> getFriendInfo(List<String> friendId){
+        return userRepository.findAllById(friendId);
+    }
 
     public Response<String> addFriend(Friend friend) {
         friendRepository.save(friend);
@@ -120,7 +123,7 @@ public class UserService {
     }
 
     private void calDays(UserInfo userInfo) {
-        long betweenDay = DateUtil.between(userInfo.getCreated(), new Date(), DateUnit.DAY);
+        long betweenDay = DateUtil.between(new Date(userInfo.getCreated()), new Date(), DateUnit.DAY);
         userInfo.setDays(betweenDay == 0 ? 1 : (int) betweenDay);
     }
 

@@ -43,10 +43,7 @@ public class UserController {
         return userService.uploadFile(file,userId,flag);
     }
 
-    @PostMapping("/addfriend")
-    public Response<String> addFriend(@RequestBody Friend friend){
-        return userService.addFriend(friend);
-    }
+
 
     @GetMapping("/search")
     public Response<List<UserInfo>> searchUser(String key){
