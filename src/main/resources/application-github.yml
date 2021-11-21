@@ -9,6 +9,14 @@ spring:
       ddl-auto: update
     database: mysql
     show-sql: true
+    ###########【Kafka集群】###########
+  kafka:
+    bootstrap-servers: Kafka服务
+    consumer:
+      group-id: defaultGroupId
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
 server:
   port: 8077

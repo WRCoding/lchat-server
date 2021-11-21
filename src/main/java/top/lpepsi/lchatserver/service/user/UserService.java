@@ -58,6 +58,7 @@ public class UserService {
 
     @Resource
     private FriendRepository friendRepository;
+
     @Resource
     private StringRedisTemplate  stringRedisTemplate;
 

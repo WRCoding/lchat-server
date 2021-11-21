@@ -1,10 +1,12 @@
 package top.lpepsi.lchatserver.service;
 
+import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import top.lpepsi.lchatserver.entity.Message;
 import top.lpepsi.lchatserver.entity.MsgType;
@@ -37,6 +39,9 @@ public class ChatServer {
 
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
+
+    @Autowired
+    private KafkaTemplate<String ,String> kafkaTemplate;
 
 
     @PostConstruct
@@ -97,13 +102,36 @@ public class ChatServer {
         private void handleMessage(String message) {
             try {
                 Message data = mapper.readValue(message, Message.class);
-                parseMessage(data);
+                if (!isOnLine(data.getTo()) && !isSystemType(data)){
+                    parseOffLineMessage(data);
+                }else{
+                    parseOnLineMessage(data);
+                }
             } catch (JsonProcessingException e) {
                 log.error("JSON 解析失败 : {}",e);
             }
         }
 
-        private void parseMessage(Message data) {
+        private boolean isSystemType(Message data) {
+            return data.getMsgType().equals(MsgType.QUIT.getType()) || data.getMsgType().equals(MsgType.INIT.getType());
+        }
+
+        private void parseOffLineMessage(Message data) {
+            if (data.getMsgType().equals(MsgType.IMAGE.getType())){
+                String prefix = "lchatimage/";
+                String suffix = ".png";
+                String imageFlag = data.getMessage();
+                log.info("image path : {}",prefix + imageFlag + suffix);
+                data.setMessage(prefix + imageFlag + suffix);
+            }
+            sendMesToMQ(data);
+        }
+
+        private boolean isOnLine(String to) {
+            return stringRedisTemplate.hasKey(to);
+        }
+
+        private void parseOnLineMessage(Message data) {
             switch (MsgType.getByType(data.getMsgType())){
                 case INIT:
                     initConnect(data);
@@ -141,6 +169,16 @@ public class ChatServer {
             } catch (JsonProcessingException e) {
                 log.error("parseText JSON 解析失败 : {}",e);
             }
+        }
+
+        private void sendMesToMQ(Message data) {
+            String message = JSONUtil.toJsonStr(data);
+            kafkaTemplate.send("lchat",message).addCallback( success -> {
+                log.info("成功发送消息到,topic:{} ,partition:{} ,offset:{}",success.getRecordMetadata().topic(),
+                        success.getRecordMetadata().partition(),success.getRecordMetadata().offset());
+            },error -> {
+                log.error("消息发送失败: {}",error.getMessage());
+            });
         }
 
         private void initConnect(Message data) {
