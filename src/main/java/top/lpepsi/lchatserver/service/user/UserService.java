@@ -10,11 +10,14 @@ import com.aliyun.oss.model.PutObjectResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Example;
+import org.springframework.data.domain.ExampleMatcher;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import top.lpepsi.lchatserver.controller.util.LcIdGenerate;
 import top.lpepsi.lchatserver.dao.FriendRepository;
 import top.lpepsi.lchatserver.dao.UserRepository;
 import top.lpepsi.lchatserver.entity.Friend;
@@ -29,6 +32,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -51,8 +55,6 @@ public class UserService {
     @Value("${bucket}")
     private String bucket;
 
-
-
     @Resource
     private UserRepository userRepository;
 
@@ -61,6 +63,12 @@ public class UserService {
 
     @Resource
     private StringRedisTemplate  stringRedisTemplate;
+
+    @Resource
+    private LcIdGenerate lcIdGenerate;
+
+    @Resource
+    private JdbcTemplate jdbcTemplate;
 
 
     public Response<UserInfo> save(UserInfo userInfo){
@@ -80,6 +88,9 @@ public class UserService {
             if (old == null){
                 return Response.error(ResponseCode.PARAM_FAIL,"该用户不存在");
             }
+        }
+        if (!StringUtils.hasText(userInfo.getLcid())){
+            userInfo.setLcid(lcIdGenerate.generateUserId());
         }
         UserInfo save = userRepository.save(userInfo);
         calDays(save);
@@ -106,8 +117,12 @@ public class UserService {
         return Response.success(userInfoList);
     }
 
-    public List<UserInfo> getFriendInfo(List<String> friendId){
-        return userRepository.findAllById(friendId);
+    public List<UserInfo> getFriendInfo(List<String> lcids){
+        List<UserInfo> list = new ArrayList<>();
+        for (String lcid : lcids) {
+            list.add(userRepository.findUserInfoByLcid(lcid));
+        }
+        return list;
     }
 
     public Response<String> addFriend(Friend friend) {
@@ -120,7 +135,7 @@ public class UserService {
      * @date 2021-09-11 15:46
      **/
     private void setCache(UserInfo info) {
-        stringRedisTemplate.opsForValue().set(info.getId(),"1");
+        stringRedisTemplate.opsForValue().set(info.getLcid(),"1");
     }
 
     private void calDays(UserInfo userInfo) {
@@ -128,12 +143,12 @@ public class UserService {
         userInfo.setDays(betweenDay == 0 ? 1 : (int) betweenDay);
     }
 
-    public Response<UserInfo> uploadFile(MultipartFile file,String userId,boolean flag){
+    public Response<UserInfo> uploadFile(MultipartFile file,String lcid,boolean flag){
         String url = handlerFile(file, flag);
         if (!StringUtils.hasText(url)){
             return Response.error(ResponseCode.ERROR,flag ? "背景图" : "头像" + "上传失败");
         }
-        UserInfo userInfo = userRepository.findById(userId).orElse(null);
+        UserInfo userInfo = userRepository.findUserInfoByLcid(lcid);
         if (ObjectUtils.isEmpty(userInfo)){
             return Response.error(ResponseCode.PARAM_FAIL,"该用户不存在");
         }

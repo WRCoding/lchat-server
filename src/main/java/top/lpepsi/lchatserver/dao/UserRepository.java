@@ -28,4 +28,14 @@ public interface UserRepository extends JpaRepository<UserInfo,String> {
      * @date 2021-09-22 20:33
      **/
     List<UserInfo> findUserInfoByUserNameContaining(String key);
+
+    /**
+     * Description: 通过lcid查找用户
+     * @param lcid
+     * @return top.lpepsi.lchatserver.entity.UserInfo
+     * Author: 7link
+     * Date: 2021-12-05
+    */
+    UserInfo findUserInfoByLcid(String lcid);
+
 }

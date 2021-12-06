@@ -23,7 +23,8 @@ import java.util.Date;
 @Table(name = "lchat_user_info")
 public class UserInfo extends BaseEntity {
 
-
+    @Column(name = "lcid")
+    private String lcid;
 
     @Column(name = "username")
     private String userName;

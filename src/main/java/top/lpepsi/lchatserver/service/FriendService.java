@@ -32,7 +32,7 @@ public class FriendService {
     }
 
     public Response<List<UserInfo>> getFriends(String id) {
-        final List<String> friendIdById = friendRepository.getFriendIdById(id);
-        return Response.success(userService.getFriendInfo(friendIdById));
+        final List<String> lcids = friendRepository.getFriendIdById(id);
+        return Response.success(userService.getFriendInfo(lcids));
     }
 }

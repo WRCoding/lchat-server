@@ -32,7 +32,11 @@ public class Message extends BaseEntity{
     @Column(name = "message")
     private String message;
 
-    /** 消息类型，如文字，文件，图片等类型 */
+    /** 消息内容类型 文字，文件，图片等类型 */
     @Column(name = "msgType")
     private String msgType;
+
+    /** 消息类型 群聊,单聊,默认为单聊*/
+    @Column(name = "type")
+    private String type = Type.SINGLE.getType();
 }

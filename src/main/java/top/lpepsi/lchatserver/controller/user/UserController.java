@@ -39,8 +39,8 @@ public class UserController {
     }
 
     @PostMapping("/uploadFile")
-    public Response<UserInfo> uploadFile(MultipartFile file,String userId,boolean flag){
-        return userService.uploadFile(file,userId,flag);
+    public Response<UserInfo> uploadFile(MultipartFile file,String lcid,boolean flag){
+        return userService.uploadFile(file,lcid,flag);
     }
 
 
