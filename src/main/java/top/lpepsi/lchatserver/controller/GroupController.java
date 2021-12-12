@@ -1,9 +1,33 @@
 package top.lpepsi.lchatserver.controller;
 
+import org.springframework.web.bind.annotation.*;
+import top.lpepsi.lchatserver.entity.Response;
+import top.lpepsi.lchatserver.entity.UserInfo;
+import top.lpepsi.lchatserver.entity.dto.GroupInfoDTO;
+import top.lpepsi.lchatserver.service.group.GroupService;
+
+import javax.annotation.Resource;
+import java.util.List;
+
 /**
  * @author 林北
  * @description 群聊接口
  * @date 2021-12-04 09:38
  */
+@RestController
+@RequestMapping("/group")
 public class GroupController {
+
+    @Resource
+    private GroupService groupService;
+
+    @PostMapping("/save")
+    public Response<GroupInfoDTO> createGroup(@RequestBody GroupInfoDTO groupInfoDTO){
+        return groupService.createGroup(groupInfoDTO);
+    }
+
+    @GetMapping("/members/{groupId}")
+    public Response<List<UserInfo>> members(@PathVariable("groupId") String groupId){
+        return groupService.members(groupId);
+    }
 }

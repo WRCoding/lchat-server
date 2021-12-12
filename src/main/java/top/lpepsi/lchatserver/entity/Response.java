@@ -44,6 +44,10 @@ public class Response<T> {
         return new Response<>(ResponseCode.ERROR,null);
     }
 
+    public static <T> Response<T> error(ResponseCode responseCode){
+        return new Response<>(responseCode.Code(), responseCode.getMessage());
+    }
+
     public static <T> Response<T> error(ResponseCode responseCode,String message){
         return new Response<>(responseCode.Code(),message);
     }
