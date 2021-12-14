@@ -18,6 +18,8 @@ public class GroupInfoDTO {
     private String groupName;
     /** 群组创建人 */
     private String groupCreator;
+    /** 群主 */
+    private String groupOwner;
     /** 群组成员*/
-    private List<String> groupMembers;
+    private List<GroupMemberInfoDTO> groupMembers;
 }

@@ -21,4 +21,13 @@ public interface GroupMemberRepository extends JpaRepository<GroupMember,String>
      * Date: 2021-12-12
     */
     List<GroupMember> findGroupMemberByGroupId(String groupId);
+
+    /**
+     * Description: 根据lcid返回成员所有的群组
+     * @param lcid
+     * return: java.util.List<top.lpepsi.lchatserver.entity.group.GroupMember>
+     * Author: 7link
+     * Date: 2021-12-14
+    */
+    List<GroupMember> findGroupMemberByGroupMemberId(String lcid);
 }

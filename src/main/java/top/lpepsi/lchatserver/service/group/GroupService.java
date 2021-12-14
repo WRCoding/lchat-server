@@ -7,8 +7,10 @@ import top.lpepsi.lchatserver.controller.util.LcIdGenerate;
 import top.lpepsi.lchatserver.dao.GroupInfoRepository;
 import top.lpepsi.lchatserver.dao.GroupMemberRepository;
 import top.lpepsi.lchatserver.dao.UserRepository;
+import top.lpepsi.lchatserver.dao.mapper.GroupMemberInfoMapper;
 import top.lpepsi.lchatserver.entity.ResponseCode;
 import top.lpepsi.lchatserver.entity.UserInfo;
+import top.lpepsi.lchatserver.entity.dto.GroupMemberInfoDTO;
 import top.lpepsi.lchatserver.entity.group.GroupInfo;
 import top.lpepsi.lchatserver.entity.Response;
 import top.lpepsi.lchatserver.entity.dto.GroupInfoDTO;
@@ -17,6 +19,8 @@ import top.lpepsi.lchatserver.entity.group.GroupMember;
 import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author 林北
@@ -38,6 +42,9 @@ public class GroupService {
     @Resource
     private UserRepository userRepository;
 
+    @Resource
+    private GroupMemberInfoMapper groupMemberInfoMapper;
+
     public Response<GroupInfoDTO> createGroup(GroupInfoDTO groupInfoDTO) {
         if (groupInfoDTO == null){
             return Response.error(ResponseCode.PARAM_FAIL);
@@ -57,9 +64,9 @@ public class GroupService {
      * Author: 7link
      * Date: 2021-12-11
     */
-    private void saveGroupMember(String groupId, List<String> groupMembers) {
-        for (String groupMember : groupMembers) {
-            groupMemberRepository.save(new GroupMember(groupId,groupMember));
+    private void saveGroupMember(String groupId, List<GroupMemberInfoDTO> groupMembers) {
+        for (GroupMemberInfoDTO groupMember : groupMembers) {
+            groupMemberInfoMapper.insert()
         }
     }
 
@@ -86,5 +93,9 @@ public class GroupService {
             list.add(userRepository.findUserInfoByLcid(groupMember.getGroupMemberId()));
         }
         return Response.success(list);
+    }
+
+    public Response<List<GroupInfoDTO>> groupInfoByLcid(String lcid) {
+        return null;
     }
 }

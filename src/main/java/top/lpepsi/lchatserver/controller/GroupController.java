@@ -30,4 +30,9 @@ public class GroupController {
     public Response<List<UserInfo>> members(@PathVariable("groupId") String groupId){
         return groupService.members(groupId);
     }
+
+    @GetMapping("/groupInfo/{lcid}")
+    public Response<List<GroupInfoDTO>> groupInfoByLcid(@PathVariable("lcid") String lcid){
+        return groupService.groupInfoByLcid(lcid);
+    }
 }
