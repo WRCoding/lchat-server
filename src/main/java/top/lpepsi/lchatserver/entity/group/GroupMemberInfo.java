@@ -1,8 +1,7 @@
-package top.lpepsi.lchatserver.entity.dto;
+package top.lpepsi.lchatserver.entity.group;
 
 import lombok.Data;
 
-import javax.persistence.Column;
 
 /**
  * @author 林北
@@ -10,7 +9,7 @@ import javax.persistence.Column;
  * @date 2021-12-14 15:48
  */
 @Data
-public class GroupMemberInfoDTO {
+public class GroupMemberInfo {
 
     /** 群组ID */
     private String groupId;

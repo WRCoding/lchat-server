@@ -1,10 +1,9 @@
 package top.lpepsi.lchatserver.entity;
 
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+
 
 /**
  * @author 林北
@@ -12,16 +11,12 @@ import javax.persistence.Table;
  * @date 2021-09-11 16:04
  */
 @Data
-@Entity
-@Table(name = "lchat_friend")
+@TableName("lchat_friend")
 public class Friend extends BaseEntity{
 
-    @Column(name = "userId")
     private String userId;
 
-    @Column(name = "friendId")
     private String friendId;
 
-    @Column(name = "isAgree")
     private Integer isAgree = 1;
 }

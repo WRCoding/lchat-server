@@ -1,4 +1,4 @@
-package top.lpepsi.lchatserver.controller.util;
+package top.lpepsi.lchatserver.core.util;
 
 import org.springframework.stereotype.Component;
 

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.lpepsi.lchatserver.dao.mapper.FriendMapper">
+    <select id="findFriendsByLcid" resultType="string">
+        select lcid
+        from (select friend_id as lcid
+              from lchat_friend
+              where user_id = #{lcid}
+              union
+              select user_id as lcid
+              from lchat_friend
+              where friend_id =  #{lcid}) as temp;
+    </select>
+</mapper>

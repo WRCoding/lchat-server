@@ -3,7 +3,9 @@ package top.lpepsi.lchatserver.controller;
 import org.springframework.web.bind.annotation.*;
 import top.lpepsi.lchatserver.entity.Response;
 import top.lpepsi.lchatserver.entity.UserInfo;
+import top.lpepsi.lchatserver.entity.dto.GroupDTO;
 import top.lpepsi.lchatserver.entity.dto.GroupInfoDTO;
+import top.lpepsi.lchatserver.entity.group.GroupMemberInfo;
 import top.lpepsi.lchatserver.service.group.GroupService;
 
 import javax.annotation.Resource;
@@ -22,12 +24,12 @@ public class GroupController {
     private GroupService groupService;
 
     @PostMapping("/save")
-    public Response<GroupInfoDTO> createGroup(@RequestBody GroupInfoDTO groupInfoDTO){
-        return groupService.createGroup(groupInfoDTO);
+    public Response<GroupInfoDTO> createGroup(@RequestBody GroupDTO groupDTO){
+        return groupService.createGroup(groupDTO);
     }
 
     @GetMapping("/members/{groupId}")
-    public Response<List<UserInfo>> members(@PathVariable("groupId") String groupId){
+    public Response<List<GroupMemberInfo>> members(@PathVariable("groupId") String groupId){
         return groupService.members(groupId);
     }
 

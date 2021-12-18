@@ -1,8 +1,7 @@
 package top.lpepsi.lchatserver.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.DependsOn;
-import top.lpepsi.lchatserver.controller.util.CloseUtil;
+import top.lpepsi.lchatserver.core.util.CloseUtil;
 import top.lpepsi.lchatserver.service.chatInterface.ClientHandlerCallback;
 
 import java.io.*;

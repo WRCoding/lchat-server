@@ -3,12 +3,13 @@ package top.lpepsi.lchatserver.service;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import top.lpepsi.lchatserver.dao.FriendRepository;
+import top.lpepsi.lchatserver.dao.mapper.FriendMapper;
 import top.lpepsi.lchatserver.entity.Friend;
 import top.lpepsi.lchatserver.entity.Response;
 import top.lpepsi.lchatserver.entity.UserInfo;
 import top.lpepsi.lchatserver.service.user.UserService;
 
+import javax.annotation.Resource;
 import java.util.List;
 
 /**
@@ -20,19 +21,19 @@ import java.util.List;
 @Slf4j
 public class FriendService {
 
-    @Autowired
-    private FriendRepository friendRepository;
+
+    @Resource
+    private FriendMapper friendMapper;
 
     @Autowired
     private UserService userService;
 
     public Response<String> saveFriend(Friend friend){
-        friendRepository.save(friend);
+        friendMapper.insert(friend);
         return Response.success();
     }
 
-    public Response<List<UserInfo>> getFriends(String id) {
-        final List<String> lcids = friendRepository.getFriendIdById(id);
-        return Response.success(userService.getFriendInfo(lcids));
+    public Response<List<UserInfo>> getFriends(String lcid) {
+        return userService.getFriendInfo(lcid);
     }
 }

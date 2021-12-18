@@ -1,4 +1,4 @@
-package top.lpepsi.lchatserver.controller.util;
+package top.lpepsi.lchatserver.core.util;
 
 import java.io.Closeable;
 import java.io.IOException;
