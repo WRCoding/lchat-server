@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="top.lpepsi.lchatserver.dao.mapper.GroupMemberInfoMapper">
     <select id="findMembersByGroupId" resultType="top.lpepsi.lchatserver.entity.group.GroupMemberInfo">
-        select lgi.group_id, group_member, username, avatar
+        select lgi.group_id, group_member,lcid, user_name, avatar
         from lchat_group_info lgi
                  left join lchat_group_member lgm on lgi.group_id = lgm.group_id
                  left join lchat_user_info lui on lgm.group_member = lui.lcid

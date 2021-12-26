@@ -93,7 +93,7 @@ public class UserService {
 
     public Response<UserInfo> login(UserInfo userInfo) {
         QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.eq("username", userInfo.getUserName());
+        queryWrapper.eq("user_name", userInfo.getUserName());
         final UserInfo one = userMapper.selectOne(queryWrapper);
         if (one == null || !one.getPassword().equals(userInfo.getPassword())) {
             return Response.error(ResponseCode.PARAM_FAIL, "用户名或者密码错误");
@@ -109,7 +109,7 @@ public class UserService {
             return Response.error(ResponseCode.ERROR, "关键字不能为空");
         }
         QueryWrapper<UserInfo> queryWrapper = new QueryWrapper<>();
-        queryWrapper.like("username", key);
+        queryWrapper.like("user_name", key);
         final List<UserInfo> list = userMapper.selectList(queryWrapper);
         return Response.success(list);
     }

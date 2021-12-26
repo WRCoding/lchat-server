@@ -3,6 +3,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Mapper;
 import top.lpepsi.lchatserver.entity.Message;
 
+import java.util.List;
+
 /**
  *@author 林北
  *@description
@@ -10,4 +12,6 @@ import top.lpepsi.lchatserver.entity.Message;
  */
 @Mapper
 public interface MessageMapper extends BaseMapper<Message> {
+
+    List<Message> getOffLineMessage(String receiveId);
 }

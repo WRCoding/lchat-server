@@ -41,7 +41,7 @@ public class KafkaService {
     public Response<List<Message>> getOffLine(String id) {
         QueryWrapper<Message> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("receive_id",id);
-        final List<Message> messageList = messageMapper.selectList(queryWrapper);
+        final List<Message> messageList = messageMapper.getOffLineMessage(id);
         if (messageList.size() > 0){
             messageMapper.delete(queryWrapper);
         }

@@ -13,7 +13,7 @@ import lombok.Data;
  */
 @Data
 @TableName("lchat_message")
-public class Message extends BaseEntity{
+public class Message{
 
     /** 消息序列号：时间戳 */
     private long msgSeq;

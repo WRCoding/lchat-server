@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="top.lpepsi.lchatserver.dao.mapper.MessageMapper">
+    <select id="getOffLineMessage" resultType="top.lpepsi.lchatserver.entity.Message">
+        SELECT
+               msg_seq,
+               send_id    AS 'from',
+               receive_id AS 'to',
+               message,
+               msg_type,
+               type
+        FROM lchat_message
+        WHERE (receive_id = #{receiveId})
+    </select>
+</mapper>

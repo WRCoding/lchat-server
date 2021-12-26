@@ -23,5 +23,5 @@ public class GroupMember extends BaseEntity {
     private String groupId;
 
     /** 群成员id */
-    private String groupMemberId;
+    private String groupMember;
 }
