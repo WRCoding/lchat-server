@@ -4,4 +4,7 @@
     <select id="findGroupIdByLcid" resultType="string">
         select group_id from lchat_group_member where group_member = #{lcid};
     </select>
+    <select id="findLcidByGroupId" resultType="string">
+        select group_member from lchat_group_member where group_id = #{groupId}
+    </select>
 </mapper>

@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
+import top.lpepsi.lchatserver.dao.mapper.GroupMemberMapper;
 import top.lpepsi.lchatserver.entity.Message;
 import top.lpepsi.lchatserver.entity.MsgType;
 import top.lpepsi.lchatserver.entity.Response;
@@ -15,6 +16,7 @@ import top.lpepsi.lchatserver.entity.Type;
 import top.lpepsi.lchatserver.service.chatInterface.ClientHandlerCallback;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -51,6 +53,8 @@ public class ChatServer implements ClientHandlerCallback {
     @Autowired
     private KafkaTemplate<String ,String> kafkaTemplate;
 
+    @Resource
+    private GroupMemberMapper groupMemberMapper;
 
     @PostConstruct
     public void init() {
@@ -166,6 +170,12 @@ public class ChatServer implements ClientHandlerCallback {
 
     private void handlerGroup(Message message){
         //todo 处理群聊消息
+        String groupId = message.getTo();
+        //找到该组的所有群成员,发送消息
+        List<String> list = groupMemberMapper.findLcidByGroupId(groupId);
+        for (String lcid : list) {
+            handlerSingle(message);
+        }
     }
 
     private void parseText(Message message){
