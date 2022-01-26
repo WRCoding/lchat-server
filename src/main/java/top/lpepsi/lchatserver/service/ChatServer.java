@@ -4,19 +4,25 @@ import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import top.lpepsi.lchatserver.dao.mapper.GroupMemberMapper;
+import top.lpepsi.lchatserver.dao.mapper.MessageMapper;
+import top.lpepsi.lchatserver.dao.mapper.UserGroupMessageMapper;
 import top.lpepsi.lchatserver.entity.Message;
 import top.lpepsi.lchatserver.entity.MsgType;
 import top.lpepsi.lchatserver.entity.Response;
 import top.lpepsi.lchatserver.entity.Type;
+import top.lpepsi.lchatserver.entity.group.GroupMessage;
+import top.lpepsi.lchatserver.entity.group.UserGroupMessage;
 import top.lpepsi.lchatserver.service.chatInterface.ClientHandlerCallback;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
+import javax.annotation.Resources;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -34,41 +40,49 @@ import java.util.stream.Collectors;
 @Component
 public class ChatServer implements ClientHandlerCallback {
 
-    protected CopyOnWriteArrayList<Socket> clientList = new CopyOnWriteArrayList<>();
 
-    protected ConcurrentHashMap<String,Socket> userSocketMap = new ConcurrentHashMap<>();
+    protected ConcurrentHashMap<String, Socket> userSocketMap = new ConcurrentHashMap<>();
 
-    protected ConcurrentHashMap<Socket,OutputStream> socketList = new ConcurrentHashMap<>();
 
     private CopyOnWriteArrayList<ClientHandler> clientHandlers = new CopyOnWriteArrayList<>();
 
-    private ConcurrentHashMap<String,ClientHandler> userClientMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, ClientHandler> userClientMap = new ConcurrentHashMap<>();
+
     private final ObjectMapper mapper = new ObjectMapper();
 
-    Thread thread = new Thread(() -> connectClient(),"L-chat-server");
+    Thread thread = new Thread(() -> connectClient(), "L-chat-server");
 
-    @Autowired
+    @Resource
     private StringRedisTemplate stringRedisTemplate;
 
-    @Autowired
-    private KafkaTemplate<String ,String> kafkaTemplate;
+    @Resource
+    private KafkaTemplate<String, String> kafkaTemplate;
 
     @Resource
     private GroupMemberMapper groupMemberMapper;
+
+//    @Resource
+//    private GroupMessageMapper groupMessageMapper;
+
+    @Resource
+    private MessageMapper messageMapper;
+
+    @Resource
+    private UserGroupMessageMapper userGroupMessageMapper;
 
     @PostConstruct
     public void init() {
         thread.start();
     }
 
-    private void connectClient(){
+    private void connectClient() {
         try {
             ServerSocket serverSocket = new ServerSocket(7778);
             log.info("---服务器启动---");
-            while (true){
+            while (true) {
                 System.out.println("---正在监听---");
                 Socket client = serverSocket.accept();
-                ClientHandler clientHandler = new ClientHandler(client,this);
+                ClientHandler clientHandler = new ClientHandler(client, this);
                 clientHandlers.add(clientHandler);
                 clientHandler.read();
 //                registerClient(client);
@@ -80,7 +94,7 @@ public class ChatServer implements ClientHandlerCallback {
 
     @Override
     public void closeClient(ClientHandler clientHandler) {
-        log.info("客户端: {} , 下线了",clientHandler.getClientInfo());
+        log.info("客户端: {} , 下线了", clientHandler.getClientInfo());
         String key = null;
         for (Map.Entry<String, ClientHandler> next : userClientMap.entrySet()) {
             if (next.getValue().getClientHandlerId().equals(clientHandler.getClientHandlerId())) {
@@ -98,21 +112,22 @@ public class ChatServer implements ClientHandlerCallback {
         //todo 解析读取的信息
         log.info(clientHandler.getClientInfo() + " : " + message);
         try {
-            parseType(mapper.readValue(message,Message.class),clientHandler);
+            Message value = mapper.readValue(message, Message.class);
+            parseType(value, clientHandler);
         } catch (JsonProcessingException e) {
-            log.error("receiveMessage JSON 解析失败 : {}",e);
+            log.error("receiveMessage JSON 解析失败 : {}", e);
         }
     }
 
 
-    public void parseType(Message message, ClientHandler clientHandler){
+    public void parseType(Message message, ClientHandler clientHandler) {
         //兼容之前的代码,如果消息类型为空,默认为单聊
-        if (message.getType() == null){
+        if (message.getType() == null) {
             message.setType(Type.SINGLE.getType());
         }
-        switch (Type.getByType(message.getType())){
+        switch (Type.getByType(message.getType())) {
             case INIT:
-                initConnect(message.getFrom(),clientHandler);
+                initConnect(message.getFrom(), clientHandler);
                 break;
             case SINGLE:
                 handlerSingle(message);
@@ -121,31 +136,28 @@ public class ChatServer implements ClientHandlerCallback {
                 handlerGroup(message);
                 break;
             case QUIT:
-                handleQuit(message.getFrom(),clientHandler);
+                handleQuit(message.getFrom(), clientHandler);
                 break;
             default:
-                throw new UnsupportedOperationException("unsupported type : "+message.getType());
+                throw new UnsupportedOperationException("unsupported type : " + message.getType());
         }
     }
 
-    private void initConnect(String from ,ClientHandler clientHandler){
-        if (userClientMap.get(from) == null && isOnLine(from)){
-            userClientMap.put(from,clientHandler);
-        }else{
+    private void initConnect(String from, ClientHandler clientHandler) {
+        if (userClientMap.get(from) == null && isOnLine(from)) {
+            userClientMap.put(from, clientHandler);
+        } else {
             throw new RuntimeException("initConnect 发送异常, " + from + " 重复初始化");
         }
-        userClientMap.forEach((key,value) -> {
-            log.info(key + " : " + value);
-        });
     }
 
-    private void handleQuit(String from ,ClientHandler clientHandler){
-        if (userClientMap.get(from) != null){
+    private void handleQuit(String from, ClientHandler clientHandler) {
+        if (userClientMap.get(from) != null) {
             ClientHandler mapClientHandler = userClientMap.get(from);
-            if (mapClientHandler.getClientHandlerId().equals(clientHandler.getClientHandlerId())){
+            if (mapClientHandler.getClientHandlerId().equals(clientHandler.getClientHandlerId())) {
                 clientHandler.exitBySelf();
                 userClientMap.remove(from);
-            }else{
+            } else {
                 String exception = "handleQuit 发送异常," + from +
                         " 对应的clientHandlerId: " +
                         clientHandler.getClientHandlerId() +
@@ -155,7 +167,10 @@ public class ChatServer implements ClientHandlerCallback {
         }
     }
 
-    private void handlerSingle(Message message) {
+    //第二版加入可靠性
+    //1.前端发送消息时设置一个定时器，等待ack
+    //2.server端接收到消息后，回调函数发送ack给客户端
+    private <T extends Message> void handlerSingle(T message) {
         switch (MsgType.getByType(message.getMsgType())) {
             case TEXT:
                 parseText(message);
@@ -168,51 +183,122 @@ public class ChatServer implements ClientHandlerCallback {
         }
     }
 
-    private void handlerGroup(Message message){
+    private <T extends Message> void handlerGroup(T message) {
         //todo 处理群聊消息
         String groupId = message.getTo();
-        //找到该组的所有群成员,发送消息
+        long msgSeq = message.getMsgSeq();
+        //父类无法强制转成子类：GroupMessage groupMessage = (GroupMessage) message;
+
+        //将消息转换成群聊消息
+        //1.保存群聊消息
+        messageMapper.insertGroupMessage(message);
+        //2.保存群成员对群消息的映射关系,在线的直接转发,只存储离线的
         List<String> list = groupMemberMapper.findLcidByGroupId(groupId);
+        List<String> onlineList = new ArrayList<>();
+        List<UserGroupMessage> userGroupMessageList = new ArrayList<>();
+        log.info("list: {}", list.toString());
         for (String lcid : list) {
-            handlerSingle(message);
+            if (isOnLine(lcid)) {
+                if (!lcid.equals(message.getFrom())) {
+                    onlineList.add(lcid);
+                }
+            } else {
+                userGroupMessageList.add(UserGroupMessage.instance(lcid, groupId, msgSeq));
+            }
         }
+        log.info("online lcid : {}", onlineList);
+        //3.在线的进行发送,
+        for (String online : onlineList) {
+            ClientHandler clientHandler = userClientMap.get(online);
+            switch (MsgType.getByType(message.getMsgType())) {
+                case TEXT:
+                    parseText(message, clientHandler);
+                    break;
+                case IMAGE:
+                    parseImage(message, clientHandler);
+                    break;
+                default:
+                    throw new UnsupportedOperationException("unsupported msgType : " + message.getMsgType());
+            }
+        }
+        //离线的写入kafka
+        if (!userGroupMessageList.isEmpty()) {
+            sendGroupMsgToKafka(userGroupMessageList);
+        }
+
+//        for (String lcid : list) {
+//            handlerSingle(message);
+//        }
     }
 
-    private void parseText(Message message){
+    /**
+     * Description: 将离线群聊信息写入kafka
+     *
+     * @param userGroupMessageList return void
+     *                             Author: ink
+     *                             Date: 2022/1/17
+     */
+    private void sendGroupMsgToKafka(List<UserGroupMessage> userGroupMessageList) {
+        //batch-size
+//        kafkaTemplate.send()
+        for (UserGroupMessage userGroupMessage : userGroupMessageList) {
+            String message = JSONUtil.toJsonStr(userGroupMessage);
+            kafkaTemplate.send("lchat-group", message).addCallback(success -> {
+                log.info("成功发送消息到,topic:{} ,partition:{} ,offset:{}", success.getRecordMetadata().topic(),
+                        success.getRecordMetadata().partition(), success.getRecordMetadata().offset());
+            }, error -> {
+                log.error("消息发送失败: {}", error.getMessage());
+            });
+        }
+
+
+    }
+
+    private void parseText(Message message) {
         String to = message.getTo();
         //判断是否在线
-        if (isOnLine(to)){
+        if (isOnLine(to)) {
             ClientHandler clientHandler = getClientHandler(to);
-            try {
-                clientHandler.send(mapper.writeValueAsString(message));
-            } catch (JsonProcessingException e) {
-                log.error("parseText JSON 解析失败 : {}",e);
-            }
-        }else{
+            parseText(message, clientHandler);
+        } else {
             sendMsgToKafKa(message);
         }
     }
 
-    private void parseImage(Message message){
-        handlerUrl(message);
+    private void parseText(Message message, ClientHandler clientHandler) {
+        try {
+            clientHandler.send(mapper.writeValueAsString(message));
+        } catch (JsonProcessingException e) {
+            log.error("parseText JSON 解析失败 : {}", e);
+        }
+    }
+
+    private void parseImage(Message message) {
         String to = message.getTo();
-        if (isOnLine(to)){
+        if (isOnLine(to)) {
             ClientHandler clientHandler = getClientHandler(to);
-            try {
-                clientHandler.send(mapper.writeValueAsString(message));
-            } catch (JsonProcessingException e) {
-                log.error("parseImage JSON 解析失败 : {}",e);
-            }
-        }else{
+            parseImage(message, clientHandler);
+        } else {
             sendMsgToKafKa(message);
         }
     }
 
-    private void handlerUrl(Message message){
+    private void parseImage(Message message, ClientHandler clientHandler) {
+        Message tempMessage = new Message();
+        BeanUtils.copyProperties(message,tempMessage);
+        handlerUrl(tempMessage);
+        try {
+            clientHandler.send(mapper.writeValueAsString(tempMessage));
+        } catch (JsonProcessingException e) {
+            log.error("parseImage JSON 解析失败 : {}", e);
+        }
+    }
+
+    private void handlerUrl(Message message) {
         String prefix = "lchatimage/";
         String suffix = ".png";
         String imageFlag = message.getMessage();
-        log.info("image path : {}",prefix + imageFlag + suffix);
+        log.info("image path : {}", prefix + imageFlag + suffix);
         message.setMessage(prefix + imageFlag + suffix);
     }
 
@@ -222,24 +308,17 @@ public class ChatServer implements ClientHandlerCallback {
 
     private void sendMsgToKafKa(Message data) {
         String message = JSONUtil.toJsonStr(data);
-        kafkaTemplate.send("lchat",message).addCallback( success -> {
-            log.info("成功发送消息到,topic:{} ,partition:{} ,offset:{}",success.getRecordMetadata().topic(),
-                    success.getRecordMetadata().partition(),success.getRecordMetadata().offset());
-        },error -> {
-            log.error("消息发送失败: {}",error.getMessage());
+        kafkaTemplate.send("lchat", message).addCallback(success -> {
+            log.info("成功发送消息到,topic:{} ,partition:{} ,offset:{}", success.getRecordMetadata().topic(),
+                    success.getRecordMetadata().partition(), success.getRecordMetadata().offset());
+        }, error -> {
+            log.error("消息发送失败: {}", error.getMessage());
         });
     }
 
-    private boolean isOnLine(String to) {
-        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(to));
+    private boolean isOnLine(String key) {
+        return Boolean.TRUE.equals(stringRedisTemplate.hasKey(key));
     }
-
-
-
-//    private void registerClient(Socket client) throws IOException {
-//        ClientThread clientThread = new ClientThread(client,client.getPort() + "-Thread");
-//        clientThread.start();
-//    }
 
     public Response getClient() {
         return Response.success(userSocketMap.keys());
